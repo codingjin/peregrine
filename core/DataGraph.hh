@@ -14,6 +14,8 @@
 namespace Peregrine
 {
 
+  struct multilabel;
+
   struct adjlist
   {
     adjlist() : length(0), ptr(nullptr) {}
@@ -47,6 +49,7 @@ namespace Peregrine
     const std::vector<std::vector<uint32_t>> &get_qs(unsigned fi) const;
     uint32_t vmap_at(unsigned fi, uint32_t v, unsigned qsi) const;
     uint32_t label(uint32_t dv) const;
+    const multilabel &get_multilabel(const uint32_t &l) const;
     const std::vector<uint32_t> &get_qo(uint32_t fi) const;
     uint32_t original_id(uint32_t v) const;
     const std::pair<uint32_t, uint32_t> &get_label_range() const;
@@ -61,6 +64,7 @@ namespace Peregrine
     unsigned forest_count;
     bool labelled_graph = false;
     std::unique_ptr<uint32_t[]> labels;
+    std::unique_ptr<multilabel[]> multilabels;
     std::pair<uint32_t, uint32_t> label_range;
     std::unique_ptr<uint32_t[]> ids;
     std::unique_ptr<adjlist[]> data_graph;

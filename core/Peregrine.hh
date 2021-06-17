@@ -663,7 +663,7 @@ namespace Peregrine
     }
 
     utils::Log{} << "-------" << "\n";
-    utils::Log{} << "all patterns finished after " << (t2-t1)/1e6 << "s" << "\n";
+    utils::Log{} << "match_multi all patterns finished after " << (t2-t1)/1e6 << "s" << "\n";
 
     return results;
   }
@@ -808,7 +808,7 @@ namespace Peregrine
     }
 
     utils::Log{} << "-------" << "\n";
-    utils::Log{} << "all patterns finished after " << (t2-t1)/1e6 << "s" << "\n";
+    utils::Log{} << "match_single all patterns finished after " << (t2-t1)/1e6 << "s" << "\n";
 
     return results;
   }
@@ -960,7 +960,7 @@ namespace Peregrine
     }
 
     utils::Log{} << "-------" << "\n";
-    utils::Log{} << "all patterns finished after " << (t2-t1)/1e6 << "s" << "\n";
+    utils::Log{} << "match_vector all patterns finished after " << (t2-t1)/1e6 << "s" << "\n";
 
     return results;
   }

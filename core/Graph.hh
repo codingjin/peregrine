@@ -17,6 +17,38 @@
 
 namespace Peregrine
 {
+  struct multilabel;
+
+  struct multilabel {
+    uint32_t l0;
+    uint32_t l1;
+    uint32_t label;
+
+    multilabel() : l0(0), l1(0), label(0) {}
+
+    multilabel(uint32_t &i0, uint32_t &i1) : l0(i0), l1(i1)
+    {
+      label = i0 + (i1 << 8);
+    }
+
+    multilabel(const multilabel &other) : l0(other.l0), l1(other.l1), label(other.label) {}
+
+    uint32_t getlabel() const 
+    {
+      return label;
+    }
+
+    struct multilabel& operator=(const multilabel& other) {
+      if (this == &other) return *this;
+
+      l0 = other.l0;
+      l1 = other.l1;
+      label = other.label;
+      return *this;
+
+    }
+
+  };
 
   // forward declaration to allow friendship with SmallGraph
   struct PatternGenerator;
@@ -42,8 +74,26 @@ namespace Peregrine
       std::unordered_map<uint32_t, std::vector<uint32_t>> true_adj_list;
       std::unordered_map<uint32_t, std::vector<uint32_t>> anti_adj_list;
       std::vector<uint32_t> labels;
+
+      std::vector<multilabel> multilabels;
+
       Graph::Labelling labelling = Graph::UNLABELLED;
     public:
+
+      void set_multilabel(const uint32_t &index, const multilabel &ml)
+      {
+        if (multilabels.size() != labels.size()) {
+          multilabels.resize(labels.size());
+        }
+
+        if (index >= multilabels.size()) {
+          std::cerr << "Invalid index to set_multilabel in class SmallGraph" << std::endl;
+        }
+
+        multilabels[index] = ml;
+
+      }
+
       friend std::ostream &operator<<(std::ostream &os, const SmallGraph &p)
       {
         os << p.to_string();
@@ -128,9 +178,19 @@ namespace Peregrine
         return labels;
       }
 
+      const std::vector<multilabel> &get_multilabels() const
+      {
+        return multilabels;
+      }
+
       uint32_t label(uint32_t qv) const
       {
         return labels[qv-1];
+      }
+
+      multilabel get_multilabel(uint32_t &qv) const
+      {
+        return multilabels[qv-1];
       }
 
       void set_labelling(Graph::Labelling l)
@@ -198,9 +258,11 @@ namespace Peregrine
               if (u > v) continue;
               uint32_t l2 = label(v);
               res += "[";
-              res += std::to_string(u) + "," + std::to_string(l1);
+              //res += std::to_string(u) + "," + std::to_string(l1);
+              res += std::to_string(u) + "," + std::to_string(l1) + ":" + std::to_string(get_multilabel(u).l0) + " " + std::to_string(get_multilabel(u).l1);
               res += "-";
-              res += std::to_string(v) + "," + std::to_string(l2);
+              //res += std::to_string(v) + "," + std::to_string(l2);
+              res += std::to_string(v) + "," + std::to_string(l2) + ":" + std::to_string(get_multilabel(v).l0) + " " + std::to_string(get_multilabel(v).l1);
               res += "]";
             }
 
@@ -256,6 +318,18 @@ namespace Peregrine
           labelling(determine_labelling())
         {
         }
+
+      SmallGraph(const SmallGraph &other, const std::vector<multilabel> &multilabels)
+        : true_adj_list(other.true_adj_list),
+          anti_adj_list(other.anti_adj_list),
+          multilabels(multilabels),
+          labelling(determine_labelling())
+          {
+            labels.resize(multilabels.size());
+            for (uint32_t i=0;i<num_vertices();++i) {
+              labels[i] = multilabels[i].getlabel();
+            }
+          }
 
       Graph::Labelling determine_labelling() const
       {
@@ -320,56 +394,65 @@ namespace Peregrine
         for (auto [v, _] : true_adj_list) anti_adj_list[v];
       }
 
+      SmallGraph(const std::unordered_map<uint32_t, std::vector<uint32_t>> &adj, const std::vector<multilabel> &multilabels)
+        : true_adj_list(adj), multilabels(multilabels)
+        {
+          labelling = Graph::LABELLED;
+
+          if (multilabels.size() != num_vertices()) {
+            std::cerr << "Invalid multilabels.size() / num_vertices()" << std::endl;
+          }
+
+          labels.resize(multilabels.size());
+
+          for (uint32_t i=0;i<multilabels.size(); ++i) {
+            labels[i] = multilabels[i].getlabel();
+          }
+
+          // make sure anti_adj_list.at() doesn't fail
+          for (auto [v, _] : true_adj_list) anti_adj_list[v];
+
+        }
+
       SmallGraph(std::string inputfile)
       {
           std::ifstream query_graph(inputfile.c_str());
           std::string line;
           while (std::getline(query_graph, line))
           {
-              std::istringstream iss(line);
-              std::vector<uint32_t> vs(std::istream_iterator<uint32_t>{iss}, std::istream_iterator<uint32_t>());
+            std::istringstream iss(line);
+            std::vector<uint32_t> vs(std::istream_iterator<uint32_t>{iss}, std::istream_iterator<uint32_t>());
 
-              uint32_t a, b;
-              if (vs.size() == 2)
-              {
-                a = vs[0]; b = vs[1];
-                true_adj_list[a].push_back(b);
-                true_adj_list[b].push_back(a);
-              } else if (vs.size() == 3) { // anti-edge
-                a = vs[0]; b = vs[1];
-                anti_adj_list[a].push_back(b);
-                anti_adj_list[b].push_back(a);
-              } else if (vs.size() == 4) { // edge with labelled vertices
-                labelling = Graph::LABELLED;
-                uint32_t alabel, blabel;
-                a = vs[0]; b = vs[2];
-                alabel = vs[1]; blabel = vs[3];
-                true_adj_list[a].push_back(b);
-                true_adj_list[b].push_back(a);
-                labels.resize(std::max({(uint32_t)labels.size(), a, b}));
-                labels[a-1] = alabel;
-                labels[b-1] = blabel;
-              } else if (vs.size() == 5) { // anti-edge with labelled vertices
-                labelling = Graph::LABELLED;
-                uint32_t alabel, blabel;
-                a = vs[0]; b = vs[2];
-                alabel = vs[1]; blabel = vs[3];
-                anti_adj_list[a].push_back(b);
-                anti_adj_list[b].push_back(a);
-                labels.resize(std::max({(uint32_t)labels.size(), a, b}));
-                labels[a-1] = alabel;
-                labels[b-1] = blabel;
-              }
+            if (vs.size() != 6) {
+              std::cerr << "error: should be 6 integers each line!" << std::endl;
+            }
+
+            /*
+            std::cout << "vs information" << std::endl;
+            std::cout << vs[0] << " " << vs[1] << " " << vs[2] << " " << vs[3] << " " << vs[4] << " " << vs[5] << std::endl;
+            */
+            
+            labelling = Graph::LABELLED;
+            uint32_t v1 = vs[0];
+            multilabel v1ml(vs[1], vs[2]);
+            uint32_t v2 = vs[3];
+            multilabel v2ml(vs[4], vs[5]);
+
+            true_adj_list[v1].push_back(v2);
+            true_adj_list[v2].push_back(v1);
+
+            labels.resize(std::max({(uint32_t)labels.size(), v1, v2}));
+            labels[v1-1] = v1ml.getlabel();
+            labels[v2-1] = v2ml.getlabel();
+
+            multilabels.resize(std::max({(uint32_t)labels.size(), v1, v2}));
+            multilabels[v1-1] = v1ml;
+            multilabels[v2-1] = v2ml;
+
           }
 
           if (num_vertices() == 0) {
             throw std::invalid_argument("Found 0 vertices in file '" + inputfile + "'");
-          }
-
-          // check if labelled or partially labelled
-          if (utils::search(labels, static_cast<uint32_t>(-1)))
-          {
-            labelling = Graph::PARTIALLY_LABELLED;
           }
 
           // make sure anti_adj_list.at() doesn't fail
@@ -377,6 +460,24 @@ namespace Peregrine
 
           // make sure true_adj_list.at() doesn't fail
           for (auto [v, _] : anti_adj_list) true_adj_list[v];
+
+          //////
+          std::cout << "labelling " << labelling << std::endl;
+          std::cout << "size of adj_list(vertex) = " << true_adj_list.size() << std::endl;
+          for (auto [v1, v2] : true_adj_list) {
+            std::cout << "v1=" << v1 << " v2=";
+            for (auto v3 : v2) {
+              std::cout << v3 << " ";
+            }
+            std::cout << std::endl;
+          }
+
+          std::cout << "labels and multilabels information" << std::endl;
+          for (uint32_t i = 0; i < num_vertices(); i++) {
+            std::cout << "vertex[" << i+1 << "] l0=" << multilabels[i].l0 << " l1=" << multilabels[i].l1 << " label" << labels[i] << std::endl;
+          }
+          //////
+
       }
 
       /**

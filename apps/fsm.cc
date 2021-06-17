@@ -19,11 +19,12 @@ int main(int argc, char *argv[])
 
   uint64_t threshold = std::stoi(argv[3]);
 
-  size_t nthreads = std::thread::hardware_concurrency();
+  size_t nthreads = std::thread::hardware_concurrency(); // 64
   bool extension_strategy = Peregrine::PatternGenerator::EDGE_BASED;
 
   uint32_t step = 1;
 
+  /*
   // decide whether user provided # threads or extension strategy
   if (argc == 5)
   {
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
       }
     }
   }
-
+  */
 
   const auto view = [](auto &&v) { return v.get_support(); };
 
@@ -93,9 +94,12 @@ int main(int argc, char *argv[])
 
   while (step < k && !patterns.empty())
   {
+    std::cout << "step=" << step << std::endl;
     freq_patterns.clear();
     supports.clear();
     auto psupps = Peregrine::match<Peregrine::Pattern, Domain, Peregrine::AT_THE_END, Peregrine::UNSTOPPABLE>(dg, patterns, nthreads, process, view);
+
+    std::cout << "match finishes!" << std::endl;
 
     for (const auto &[p, supp] : psupps)
     {
@@ -107,6 +111,7 @@ int main(int argc, char *argv[])
     }
 
     patterns = Peregrine::PatternGenerator::extend(freq_patterns, extension_strategy);
+    std::cout << "extend finishes!" << std::endl;
     step += 1;
   }
   auto t2 = utils::get_timestamp();
@@ -114,6 +119,12 @@ int main(int argc, char *argv[])
   std::cout << freq_patterns.size() << " frequent patterns: " << std::endl;
   for (uint32_t i = 0; i < freq_patterns.size(); ++i)
   {
+    std::vector<uint32_t> plabels = freq_patterns[i].get_labels();
+    for(uint32_t j=0;j<plabels.size();++j) {
+      Peregrine::multilabel temp_ml = dg.get_multilabel(plabels[j]);
+      freq_patterns[i].set_multilabel(j, temp_ml);
+    }
+
     std::cout << freq_patterns[i].to_string() << ": " << supports[i] << std::endl;
   }
 

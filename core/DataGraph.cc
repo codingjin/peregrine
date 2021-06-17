@@ -41,9 +41,13 @@ namespace Peregrine
     if (p.labelling == Graph::LABELLED)
     {
       labelled_graph = true;
+
+      multilabels = std::make_unique<multilabel[]>(vertex_count+1);
+
       for (uint32_t u = 0; u < p.labels.size(); ++u)
       {
         labels[u+1] = p.labels[u];
+        multilabels[u+1] = p.multilabels[u];
       }
 
       uint32_t min_label = *std::min_element(p.labels.cbegin(), p.labels.cend());
@@ -242,6 +246,16 @@ namespace Peregrine
   uint32_t DataGraph::label(uint32_t dv) const
   {
     return labels[dv];
+  }
+
+  const multilabel &DataGraph::get_multilabel(const uint32_t &l) const
+  {
+    for (uint32_t i=1;i<vertex_count;++i) {
+      if (labels[i]==l) return multilabels[i];
+    }
+
+    std::cerr << "label value not found in original DataGraph!" << std::endl;
+    throw std::invalid_argument("Invalid label value to map multilabel value!");
   }
 
   uint32_t DataGraph::vmap_at(unsigned vgsi, uint32_t v, unsigned qsi) const
