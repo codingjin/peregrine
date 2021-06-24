@@ -14,6 +14,8 @@
 #include "utils.hh"
 #include "./bliss-0.73/graph.hh"
 
+#include <stdexcept>
+
 
 namespace Peregrine
 {
@@ -24,12 +26,19 @@ namespace Peregrine
     uint32_t l1;
     uint32_t label;
 
-    multilabel() : l0(0), l1(0), label(0) {}
+    //multilabel() : l0(0), l1(0), label(0) {}
 
-    multilabel(uint32_t &i0, uint32_t &i1) : l0(i0), l1(i1)
+    multilabel(uint32_t i0=uint32_t(-1), uint32_t i1=uint32_t(-1)) : l0(i0), l1(i1)
+    {
+      label = i0 + (i1<<8);
+    }
+
+/*
+    multilabel(uint32_t &i0=0, uint32_t &i1=0) : l0(i0), l1(i1)
     {
       label = i0 + (i1 << 8);
     }
+*/
 
     multilabel(const multilabel &other) : l0(other.l0), l1(other.l1), label(other.label) {}
 
@@ -102,7 +111,8 @@ namespace Peregrine
 
       uint32_t num_vertices() const
       {
-        return v_list().size();
+        if (labelling == Graph::LABELLED) return labels.size();
+        else  return v_list().size();
       }
 
       uint32_t num_anti_vertices() const
@@ -425,6 +435,7 @@ namespace Peregrine
 
             if (vs.size() != 6) {
               std::cerr << "error: should be 6 integers each line!" << std::endl;
+              throw std::runtime_error("each line should have 6 integers");
             }
 
             /*
@@ -461,7 +472,7 @@ namespace Peregrine
           // make sure true_adj_list.at() doesn't fail
           for (auto [v, _] : anti_adj_list) true_adj_list[v];
 
-          //////
+          /*
           std::cout << "labelling " << labelling << std::endl;
           std::cout << "size of adj_list(vertex) = " << true_adj_list.size() << std::endl;
           for (auto [v1, v2] : true_adj_list) {
@@ -472,11 +483,24 @@ namespace Peregrine
             std::cout << std::endl;
           }
 
+          std::cout << "num_vertices=" << num_vertices() << std::endl;
+          std::cout << "size of adjlist is " << true_adj_list.size() << std::endl;
+          std::cout << "multilabels size=" << multilabels.size() << std::endl;
+
           std::cout << "labels and multilabels information" << std::endl;
-          for (uint32_t i = 0; i < num_vertices(); i++) {
+
+          for (uint32_t i=0;i<num_vertices();++i) {
             std::cout << "vertex[" << i+1 << "] l0=" << multilabels[i].l0 << " l1=" << multilabels[i].l1 << " label" << labels[i] << std::endl;
           }
-          //////
+
+          for (uint32_t i = 0; i < num_vertices(); i++) {
+            if (multilabels[i].l0 != uint32_t(-1)) {
+              std::cout << "vertex[" << i+1 << "] l0=" << multilabels[i].l0 << " l1=" << multilabels[i].l1 << " label" << labels[i] << std::endl;
+            }
+          }
+
+         std::cout << "After labels and multilabels information" << std::endl;
+        */
 
       }
 

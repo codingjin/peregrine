@@ -498,8 +498,12 @@ namespace Peregrine
       }
 
       result = match_single<AggValueT, OnTheFly, Stoppable, Output>(process, view, nworkers, single);
+
+
       auto vector_result = match_vector<AggValueT, OnTheFly, Stoppable, Output>(process, view, nworkers, vector);
+      //std::cout << "Before match_multi" << std::endl;
       auto multi_result = match_multi<AggKeyT, AggValueT, OnTheFly, Stoppable, Output>(process, view, nworkers, multi);
+      //std::cout << "After match_multi" << std::endl;
 
       result.insert(result.end(), vector_result.begin(), vector_result.end());
       result.insert(result.end(), multi_result.begin(), multi_result.end());
@@ -533,8 +537,8 @@ namespace Peregrine
     std::vector<std::jthread> pool;
     DataGraph *dg(Context::data_graph);
     dg->set_rbi(patterns.front());
-
     Context::current_pattern = std::make_shared<AnalyzedPattern>(AnalyzedPattern(dg->rbi));
+    
 
     MapAggregator<AggKeyT, AggValueT, OnTheFly, Stoppable, decltype(viewer), Output> aggregator(nworkers, viewer);
 

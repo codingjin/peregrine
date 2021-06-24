@@ -78,6 +78,9 @@ namespace Peregrine
    */
   std::vector<SmallGraph> PatternGenerator::extend(const std::vector<SmallGraph> &from, bool vertex_based, bool overwrite_anti_edges)
   {
+
+    auto t1 = utils::get_timestamp();
+
     std::vector<SmallGraph> result;
     std::unordered_set<uint32_t> label_set;
     for (const auto &p : from)
@@ -470,6 +473,11 @@ namespace Peregrine
         return true;
       }
     });
+
+    auto t2 = utils::get_timestamp();
+
+    utils::Log{} << "--------" << "\n";
+    utils::Log{} << "PatternGenerator::extend finished after " << (t2-t1)/1e6 << "s" << "\n";
 
     return result;
   }

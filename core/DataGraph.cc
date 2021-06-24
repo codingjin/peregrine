@@ -25,6 +25,7 @@ namespace Peregrine
     data_graph = std::make_unique<adjlist[]>(p.num_vertices()+1);
 
     uint32_t cursor = 0;
+    /*
     for (uint32_t v = 1; v <= p.num_vertices(); ++v) {
       std::sort(p.true_adj_list.at(v).begin(), p.true_adj_list.at(v).end());
 
@@ -33,7 +34,23 @@ namespace Peregrine
       data_graph[v-1].length = p.true_adj_list.at(v).size();
       cursor += p.true_adj_list.at(v).size();
     }
+    */
 
+   for (uint32_t i=1;i<=p.num_vertices();++i) {
+     if (p.get_multilabel(i).l0 == uint32_t(-1)) {
+       data_graph[i-1].ptr = nullptr;
+       data_graph[i-1].length = 0;
+     }else {
+       std::sort(p.true_adj_list.at(i).begin(), p.true_adj_list.at(i).end());
+       std::memcpy(&graph_in_memory[cursor], &p.true_adj_list.at(i)[0], p.true_adj_list.at(i).size() * sizeof(uint32_t));
+       data_graph[i-1].ptr = &graph_in_memory[cursor];
+       data_graph[i-1].length = p.true_adj_list.at(i).size();
+       cursor += p.true_adj_list.at(i).size();
+     }
+     
+   }
+
+    //vertex_count = p.num_vertices();
     vertex_count = p.num_vertices();
     edge_count = p.num_true_edges();
 
@@ -42,20 +59,35 @@ namespace Peregrine
     {
       labelled_graph = true;
 
-      multilabels = std::make_unique<multilabel[]>(vertex_count+1);
+      multilabels = std::make_unique<multilabel[]>(vertex_count + 1);
 
-      for (uint32_t u = 0; u < p.labels.size(); ++u)
+      for (uint32_t u = 0; u < vertex_count; ++u)
       {
         labels[u+1] = p.labels[u];
         multilabels[u+1] = p.multilabels[u];
       }
 
+      /*
       uint32_t min_label = *std::min_element(p.labels.cbegin(), p.labels.cend());
       uint32_t max_label = *std::max_element(p.labels.cbegin(), p.labels.cend());
+      */
+
+
+      uint32_t min_label, max_label;
+      for (uint32_t i=1;i<=vertex_count;++i) {
+        if (multilabels[i].l0 != uint32_t(-1)) {
+          min_label = labels[i];
+          max_label = labels[i];
+          for (uint32_t j=i+1;j<=vertex_count;++j) {
+            if (labels[j] < min_label)  min_label = labels[j];
+            else if (labels[j] > max_label) max_label = labels[j];
+          }
+          break;
+        }
+      }
+
       label_range = std::make_pair(min_label, max_label);
     }
-
-
     ids = std::make_unique<uint32_t[]>(vertex_count+1);
     std::iota(&ids[0], &ids[vertex_count+1], 0);
   }
