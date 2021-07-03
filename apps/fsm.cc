@@ -65,8 +65,7 @@ int main(int argc, char *argv[])
   std::cout << k << "-FSM with threshold " << threshold << std::endl;
 
   Peregrine::DataGraph dg(data_graph_name);
-
-  
+  //return 0;
 
   // initial discovery
   auto t1 = utils::get_timestamp();
