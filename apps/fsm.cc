@@ -19,7 +19,8 @@ int main(int argc, char *argv[])
 
   uint64_t threshold = std::stoi(argv[3]);
 
-  size_t nthreads = std::thread::hardware_concurrency(); // 64
+  //size_t nthreads = std::thread::hardware_concurrency(); // 64
+  size_t nthreads = 1;
   bool extension_strategy = Peregrine::PatternGenerator::EDGE_BASED;
 
   uint32_t step = 1;
@@ -64,6 +65,8 @@ int main(int argc, char *argv[])
   std::cout << k << "-FSM with threshold " << threshold << std::endl;
 
   Peregrine::DataGraph dg(data_graph_name);
+
+  
 
   // initial discovery
   auto t1 = utils::get_timestamp();

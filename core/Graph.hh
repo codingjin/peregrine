@@ -468,7 +468,13 @@ namespace Peregrine
 
           // make sure anti_adj_list.at() doesn't fail
           for (auto [v, _] : true_adj_list) anti_adj_list[v];
-
+          
+          /*
+          std::cout << "try to iterate true_adj_list" << std::endl;
+          for (auto [v, _] : true_adj_list) {
+            std::cout << v << std::endl;
+          }
+          */
           // make sure true_adj_list.at() doesn't fail
           for (auto [v, _] : anti_adj_list) true_adj_list[v];
 

@@ -72,19 +72,27 @@ namespace Peregrine
       uint32_t max_label = *std::max_element(p.labels.cbegin(), p.labels.cend());
       */
 
-
       uint32_t min_label, max_label;
       for (uint32_t i=1;i<=vertex_count;++i) {
         if (multilabels[i].l0 != uint32_t(-1)) {
           min_label = labels[i];
           max_label = labels[i];
           for (uint32_t j=i+1;j<=vertex_count;++j) {
-            if (labels[j] < min_label)  min_label = labels[j];
-            else if (labels[j] > max_label) max_label = labels[j];
+            if (multilabels[j].l0 != uint32_t(-1)) {
+              if (labels[j] < min_label)  min_label = labels[j];
+              else if (labels[j] > max_label) max_label = labels[j];
+            }
           }
           break;
         }
       }
+
+      /*
+      std::cout << "min_label=" << min_label << " max_label=" << max_label << std::endl;
+      for (uint32_t i=1;i<=vertex_count;++i) {
+        if (labels[i]>=min_label && labels[i]<=max_label) std::cout << labels[i] << std::endl;
+      }
+      */
 
       label_range = std::make_pair(min_label, max_label);
     }
