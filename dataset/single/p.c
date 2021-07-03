@@ -17,10 +17,13 @@ int main()
 	int label[MAX], label1[MAX];
 	int i = 1, d;
 	while (fscanf(ptr2, "%d ", &d) == 1) {
-		label[i] = d;
-		label1[i] = d + 1;
+		label[i] = d + 1;
+		label1[i] = d + 11;
 		++i;
 	}
+
+	//printf("i=%d\n", i);
+	//return 0;
 	
 	int v1, v2;
 	while (fscanf(ptr1, "%d %d ", &v1, &v2) == 2) {
@@ -28,7 +31,7 @@ int main()
 			printf("Invalid vertex v1=%d v2=%d\n", v1, v2);
 		}
 		//printf("%d %d %d %d\n", v1, label[v1], v2, label[v2]); // input1
-		printf("%d %d %d %d %d %d\n", v1, label[v1], label1[v1], v2, label[v2], label1[v2]);
+		printf("%d %d %d %d %d %d\n", v1, label[v1], label1[v1], v2, label[v2], label1[v2]); // input2
 	}
 
 
