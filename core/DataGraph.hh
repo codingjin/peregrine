@@ -31,6 +31,12 @@ namespace Peregrine
     DataGraph(const std::string &data_graph_path);
     DataGraph(const SmallGraph &p);
     DataGraph(DataGraph &&other);
+
+    void set_debug();
+    void clear_debug();
+    uint32_t get_debug() const;
+
+
     DataGraph(DataGraph &) = delete;
 
     void set_rbi(const AnalyzedPattern &rbi);
@@ -70,6 +76,9 @@ namespace Peregrine
     std::unique_ptr<adjlist[]> data_graph;
     std::unique_ptr<uint32_t[]> graph_in_memory;
     std::unordered_set<uint32_t> known_labels;
+
+    // add for debug
+    uint32_t debug;
   };
 }
 

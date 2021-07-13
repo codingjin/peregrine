@@ -30,7 +30,8 @@ namespace Peregrine
 
     multilabel(uint32_t i0=uint32_t(-1), uint32_t i1=uint32_t(-1)) : l0(i0), l1(i1)
     {
-      label = i0 + (i1<<8);
+      //label = i0 + (i1<<8);
+      label = i0 + (i1<<4);
     }
 
 /*

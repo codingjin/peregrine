@@ -207,10 +207,26 @@ namespace Peregrine
       ids(std::move(other.ids)),
       data_graph(std::move(other.data_graph)),
       graph_in_memory(std::move(other.graph_in_memory)),
-      known_labels(other.known_labels)
+      known_labels(other.known_labels),
+      debug(0)
   {
     other.vertex_count = 0;
     other.edge_count = 0;
+  }
+
+  void DataGraph::set_debug()
+  {
+    debug = 1;
+  }
+
+  void DataGraph::clear_debug()
+  {
+    debug = 0;
+  }
+
+  uint32_t DataGraph::get_debug() const
+  {
+    return debug;
   }
 
   void DataGraph::set_rbi(const AnalyzedPattern &new_rbi)

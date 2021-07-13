@@ -6,8 +6,11 @@
 
 #include "Domain.hh"
 
+#include <cstdlib>
+
 int main(int argc, char *argv[])
 {
+  
   if (argc < 4)
   {
     std::cerr << "USAGE: " << argv[0] << " <data graph> <max size> <support threshold> [vertex-induced] [# threads]" << std::endl;
@@ -25,47 +28,18 @@ int main(int argc, char *argv[])
 
   uint32_t step = 1;
 
-  /*
-  // decide whether user provided # threads or extension strategy
-  if (argc == 5)
-  {
-    std::string arg(argv[4]);
-    if (arg.starts_with("v")) // asking for vertex-induced
-    {
-      extension_strategy = Peregrine::PatternGenerator::VERTEX_BASED;
-      step = 2;
-    }
-    else if (!arg.starts_with("e")) // not asking for edge-induced
-    {
-      nthreads = std::stoi(arg);
-    }
-  }
-  else if (argc == 6)
-  {
-    for (std::string arg : {argv[4], argv[5]})
-    {
-      if (arg.starts_with("v")) // asking for vertex-induced
-      {
-        extension_strategy = Peregrine::PatternGenerator::VERTEX_BASED;
-        step = 2;
-      }
-      else if (!arg.starts_with("e")) // not asking for edge-induced
-      {
-        nthreads = std::stoi(arg);
-      }
-    }
-  }
-  */
-
   const auto view = [](auto &&v) { return v.get_support(); };
 
   std::vector<uint64_t> supports;
   std::vector<Peregrine::SmallGraph> freq_patterns;
 
   std::cout << k << "-FSM with threshold " << threshold << std::endl;
+  //std::cout << "Sleep before dg" << std::endl;
 
   Peregrine::DataGraph dg(data_graph_name);
   //return 0;
+  //std::cout << "Sleep after dg" << std::endl;
+  //sleep(600);
 
   // initial discovery
   auto t1 = utils::get_timestamp();
@@ -77,7 +51,11 @@ int main(int argc, char *argv[])
 
     std::vector<Peregrine::SmallGraph> patterns = {Peregrine::PatternGenerator::star(2)};
     patterns.front().set_labelling(Peregrine::Graph::DISCOVER_LABELS);
+    //std::cout << "Before ini match" << std::endl;
+    //sleep(600);
     auto psupps = Peregrine::match<Peregrine::Pattern, DiscoveryDomain<1>, Peregrine::AT_THE_END, Peregrine::UNSTOPPABLE>(dg, patterns, nthreads, process, view);
+    //std::cout << "after match" << std::endl;
+    //sleep(600);
     for (const auto &[p, supp] : psupps)
     {
       if (supp >= threshold)
@@ -87,8 +65,14 @@ int main(int argc, char *argv[])
       }
     }
   }
-
+    
+  //std::cout << "before extend" << std::endl;
+  //sleep(600);
   std::vector<Peregrine::SmallGraph> patterns = Peregrine::PatternGenerator::extend(freq_patterns, extension_strategy);
+
+  //std::cout << "after init extend" << std::endl;
+  //sleep(600);
+
 
   const auto process = [](auto &&a, auto &&cm) {
     a.map(cm.pattern, cm.mapping);
@@ -99,18 +83,38 @@ int main(int argc, char *argv[])
     std::cout << "step=" << step << std::endl;
     freq_patterns.clear();
     supports.clear();
-    auto psupps = Peregrine::match<Peregrine::Pattern, Domain, Peregrine::AT_THE_END, Peregrine::UNSTOPPABLE>(dg, patterns, nthreads, process, view);
 
-    std::cout << "match finishes!" << std::endl;
-
+    auto psupps = Peregrine::match<Peregrine::Pattern, Domain, Peregrine::AT_THE_END, Peregrine::UNSTOPPABLE>(dg, patterns, nthreads, process, view, 1);
+   
+    
+    
+    std::cout << "After match!" << std::endl;
+    std::cout << "psupps.size()=" << psupps.size() << std::endl;
+    std::cout << "total size of psupps = " << sizeof(psupps) + psupps.size()*sizeof(psupps[0]) << std::endl;
+    
+    //sleep(600);
+    
+    //int counter = 0;
     for (const auto &[p, supp] : psupps)
     {
       if (supp >= threshold)
       {
+        //++counter;
         freq_patterns.push_back(p);
         supports.push_back(supp);
       }
     }
+
+    //std::cout << "counter=" << counter << std::endl;
+
+    /*
+    std::cout << "Bf extend!" << std::endl;
+    std::cout << "freq_patterns.size()=" << freq_patterns.size() << std::endl;
+    std::cout << "total size of freq_patterns = " << sizeof(freq_patterns) + freq_patterns.size()*sizeof(freq_patterns[0]) << std::endl;
+    std::cout << "supports.size()=" << supports.size() << std::endl;
+    std::cout << "total size of supports = " << sizeof(supports) + supports.size()*sizeof(supports[0]) << std::endl;
+    sleep(600);
+    */
 
     patterns = Peregrine::PatternGenerator::extend(freq_patterns, extension_strategy);
     std::cout << "extend finishes!" << std::endl;
@@ -131,5 +135,6 @@ int main(int argc, char *argv[])
   }
 
   std::cout << "finished in " << (t2-t1)/1e6 << "s" << std::endl;
+  
   return 0;
 }

@@ -329,7 +329,21 @@ namespace Peregrine
     std::vector<std::vector<uint32_t>> cands(dg->rbi.query_graph.num_vertices() + 2);
 
     using ViewFunc = decltype(a.viewer);
+    /*
+    if (dg->get_debug() == 1) {
+      std::cout << "in vector worker debug point 01" << std::endl;
+      sleep(600);
+    }
+    */
     auto *ah = new VecAggHandle<AggValueT, OnTheFly, Stoppable, ViewFunc, Output>(tid, &a, b);
+    
+    /*
+    if (dg->get_debug() == 1) {
+      std::cout << "in vector worker debug point 02" << std::endl;
+      sleep(600);
+    }
+    */
+    
     a.register_handle(tid, ah);
 
     while (b.hit())
@@ -421,8 +435,9 @@ namespace Peregrine
       const std::vector<SmallGraph> &patterns,
       uint32_t nworkers,
       PF &&process,
-      VF viewer = default_viewer<GivenAggValueT>)
+      VF viewer = default_viewer<GivenAggValueT>, int debug=0)
   {
+
     if (patterns.empty())
     {
       return {};
@@ -497,16 +512,71 @@ namespace Peregrine
           << "WARNING: If you are counting, Peregrine::count() is much faster!\n";
       }
 
+      //std::cout << "before single" << std::endl;
+      //sleep(600);
+      /*
+      if (debug == 1){
+        std::cout << "1st before single" << std::endl;
+        sleep(600);
+      }
+      */
+
       result = match_single<AggValueT, OnTheFly, Stoppable, Output>(process, view, nworkers, single);
+      /*
+      if (debug == 1){
+        std::cout << "1st after single" << std::endl;
+        sleep(600);
+      }
+      */
 
-
+      //std::cout << "just before match_vector" << std::endl;
+      //auto vector_result = match_vector<AggValueT, OnTheFly, Stoppable, Output>(process, view, nworkers, vector);
+      /*
+      if (debug == 1) {
+        std::cout << "will enter 1st match_vector" << std::endl;
+      }
+      */
       auto vector_result = match_vector<AggValueT, OnTheFly, Stoppable, Output>(process, view, nworkers, vector);
-      //std::cout << "Before match_multi" << std::endl;
+      
+      /*
+      if (debug == 1) {
+        std::cout << "match_vector finishes!" << std::endl;
+        std::cout << "vector_result.size()=" << vector_result.size() << std::endl;
+        std::cout << "sizeof(vector_result[0]) = " << sizeof(vector_result[0]) << std::endl;
+        std::cout << "total size of vector_result=" << sizeof(vector_result) + sizeof(vector_result[0])*vector_result.size() << std::endl;
+        sleep(600);
+      }
+      */
+      
+      /*
+      if (debug == 1) {
+        std::cout << "sleep after 1st match_vector" << std::endl;
+        sleep(600);
+      }
+      */
       auto multi_result = match_multi<AggKeyT, AggValueT, OnTheFly, Stoppable, Output>(process, view, nworkers, multi);
       //std::cout << "After match_multi" << std::endl;
+      /*
+      if (debug == 1) {
+        std::cout << "sleep after 1st match_multi" << std::endl;
+        sleep(600);
+      }
+      */
 
       result.insert(result.end(), vector_result.begin(), vector_result.end());
+      /*
+      if (debug == 1) {
+        std::cout << "sleep after 1st insert vector_result" << std::endl;
+        sleep(600);
+      }
+      */
       result.insert(result.end(), multi_result.begin(), multi_result.end());
+      /*
+      if (debug == 1) {
+        std::cout << "sleep after 1st insert multi_result" << std::endl;
+        sleep(600);
+      }
+      */
 
       return result;
     }
@@ -827,15 +897,68 @@ namespace Peregrine
     if (patterns.empty()) return results;
 
     // initialize
+    /*
+    if (debug==1) {
+      std::cout << "point01" << std::endl;
+      sleep(600);
+    }
+    */
+
     Barrier barrier(nworkers);
+    /*
+    if (debug==1) {
+      std::cout << "point02" << std::endl;
+      sleep(600);
+    }
+    */
+
     std::vector<std::jthread> pool;
+    /*
+    if (debug==1) {
+      std::cout << "point03" << std::endl;
+      sleep(600);
+    }
+    */
     DataGraph *dg(Context::data_graph);
+    /*
+    if (debug==1) {
+      std::cout << "point04" << std::endl;
+      sleep(600);
+    }
+    */
     dg->set_rbi(patterns.front());
+    /*
+    if (debug==1) {
+      std::cout << "point05" << std::endl;
+      sleep(600);
+    }
+    */
 
     Context::current_pattern = std::make_shared<AnalyzedPattern>(AnalyzedPattern(dg->rbi));
+    /*
+    if (debug==1) {
+      std::cout << "point06" << std::endl;
+      sleep(600);
+    }
+    */
 
     VecAggregator<AggValueT, OnTheFly, Stoppable, decltype(viewer), Output> aggregator(nworkers, viewer);
+/*
+    if (debug==1) {
+      std::cout << "point07" << std::endl;
+      sleep(600);
+    }
+*/
 
+/*
+    if (debug==1) {
+      std::cout << "In 1st match_vector point 1" << std::endl;
+      sleep(600);
+    }
+*/
+
+    std::cout << "nworkers=" << nworkers << std::endl;
+    dg->set_debug();
     for (uint32_t i = 0; i < nworkers; ++i)
     {
       pool.emplace_back(vector_worker<
@@ -852,17 +975,29 @@ namespace Peregrine
           std::ref(aggregator),
           std::ref(process));
     }
-
+    /*
+    if (debug==1) {
+      std::cout << "In 1st match_vector point 2" << std::endl;
+      sleep(600);
+    }
+    */
     std::thread agg_thread;
     if constexpr (OnTheFly == ON_THE_FLY)
     {
+      std::cout << "ON_THE_FLY" << std::endl;
       agg_thread = std::thread(aggregator_thread<decltype(aggregator)>, std::ref(barrier), std::ref(aggregator));
     }
 
     // make sure the threads are all running
     barrier.join();
-
+/*
+    if (debug==1) {
+      std::cout << "In 1st match_vector after barrier.join() point 3 " << std::endl;
+      sleep(600);
+    }
+*/
     auto t1 = utils::get_timestamp();
+    std::cout << "patterns' size=" << patterns.size() << std::endl;
     for (const auto &p : patterns)
     {
       // reset state
@@ -949,23 +1084,58 @@ namespace Peregrine
         }
         l += 1;
       }
+      //std::cout << "l=" << l << " end of match_vector" << std::endl;
     }
-    auto t2 = utils::get_timestamp();
 
+/*    
+    if (debug==1) {
+      std::cout << "In 1st match_vector after iteration for patterns point 4" << std::endl;
+      sleep(600);
+    }
+*/    
+    auto t2 = utils::get_timestamp();
+/*
+    if (debug==1) {
+      std::cout << "In 1st match_vector before barrier.finish() for patterns point 5" << std::endl;
+      sleep(600);
+    }
+*/
     barrier.finish();
+/*    
+    if (debug==1) {
+      std::cout << "In 1st match_vector after barrier.finish() for patterns point 6" << std::endl;
+      sleep(600);
+    }
+*/
+
     for (auto &th : pool)
     {
       th.join();
     }
 
+    /*
+    if (debug==1) {
+      std::cout << "In 1st match_vector after th.join() for patterns point 7" << std::endl;
+      sleep(600);
+    }
+    */
+
     if constexpr (OnTheFly == ON_THE_FLY)
     {
+      std::cout << "ON_THE_FLY agg_thread.join()" << std::endl;
       agg_thread.join();
     }
 
     utils::Log{} << "-------" << "\n";
     utils::Log{} << "match_vector all patterns finished after " << (t2-t1)/1e6 << "s" << "\n";
-
+    
+    /*
+    if (debug==1) {
+      std::cout << "In 1st match_vector before ret point 8" << std::endl;
+      sleep(600);
+    }
+    */
+    
     return results;
   }
 

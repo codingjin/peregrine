@@ -33,7 +33,15 @@ namespace Peregrine
         flag({false, false}),
         viewer(vf),
         latest_result(VEC_AGG_SIZE)
-    {}
+    {
+      std::cout << "VecAggregator() construction" << std::endl;
+      std::cout << "VEC_AGG_OFFSET=" << VEC_AGG_OFFSET << std::endl;
+      std::cout << "VEC_AGG_SIZE=" << VEC_AGG_SIZE << std::endl;
+      std::cout << "latest_result.size()=" << latest_result.size() << std::endl;
+      std::cout << "size of element of latest_result = " << sizeof(latest_result[0]) << std::endl;
+      std::cout << "total sizeof latest_result=" << sizeof(latest_result) + sizeof(latest_result[0])*latest_result.size() << std::endl;
+
+    }
   
     VecAggregator(VecAggregator &) = delete;
     ~VecAggregator() { for (auto handle : handles) delete handle; }
@@ -148,7 +156,12 @@ namespace Peregrine
         agg(a),
         new_label_idx(Context::data_graph->new_label),
         barrier(b)
-    {}
+    {
+      std::cout << "total size of curr=" << sizeof(curr) + sizeof(curr[0])*curr.size() << std::endl;
+      std::cout << "total size of other=" << sizeof(other) + sizeof(other[0])*other.size() << std::endl;
+
+
+    }
   
     // Important! Writing AggValueT &v ruins performance.
     // Consider FSM: AggValueT is Domain, but we map vectors, so each call to
